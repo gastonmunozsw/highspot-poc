@@ -11,7 +11,7 @@ resource "azurerm_key_vault" "vault" {
 
   network_acls {
     default_action             = "Deny"
-    bypass                     = ["AzureServices"]
+    bypass                     = "AzureServices"
     virtual_network_subnet_ids = [var.gateway_subnet_id]
   }
 
