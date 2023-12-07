@@ -14,14 +14,14 @@ variable "secrets" {
   }))
 }
 
+variable "ssl_certificate_name" {
+  description = "SSL Certificate Name"
+}
+
 variable "user_identity" {
   description = "User Identity"
 }
 
 variable "gateway_subnet_id" {
   description = "Gateway Subnet Id"
-}
-
-variable "current" {
-    description = "Current Azure user"
 }

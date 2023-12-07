@@ -1,15 +1,17 @@
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_key_vault" "vault" {
   name                       = var.kvault_name
   location                   = var.resource_group.location
   resource_group_name        = var.resource_group.name
-  tenant_id                  = var.current.tenant_id
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
   sku_name                   = "standard"
   soft_delete_retention_days = 7
   enable_rbac_authorization  = false
 
   access_policy {
-    tenant_id = var.current.tenant_id
-    object_id = var.current.object_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
     certificate_permissions = [
       "Create",
       "Delete",
@@ -58,12 +60,13 @@ resource "azurerm_key_vault" "vault" {
   }
 
   access_policy {
-    tenant_id = var.current.tenant_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = var.user_identity.principal_id
     secret_permissions = [
       "Get"
     ]
   }
+
 }
 
 resource "azurerm_key_vault_secret" "secrets" {
@@ -71,4 +74,56 @@ resource "azurerm_key_vault_secret" "secrets" {
   name         = each.value.name
   value        = each.value.secret
   key_vault_id = azurerm_key_vault.vault.id
+}
+
+resource "azurerm_key_vault_certificate" "cert" {
+  name         = var.ssl_certificate_name
+  key_vault_id = azurerm_key_vault.vault.id
+
+  certificate_policy {
+    issuer_parameters {
+      name = "Self"
+    }
+
+    key_properties {
+      exportable = true
+      key_size   = 2048
+      key_type   = "RSA"
+      reuse_key  = true
+    }
+
+    lifetime_action {
+      action {
+        action_type = "AutoRenew"
+      }
+
+      trigger {
+        days_before_expiry = 30
+      }
+    }
+
+    secret_properties {
+      content_type = "application/x-pkcs12"
+    }
+
+    x509_certificate_properties {
+      extended_key_usage = ["1.3.6.1.5.5.7.3.1"]
+
+      key_usage = [
+        "cRLSign",
+        "dataEncipherment",
+        "digitalSignature",
+        "keyAgreement",
+        "keyCertSign",
+        "keyEncipherment",
+      ]
+
+      subject_alternative_names {
+        dns_names = ["highspot-poc.westus2.cloudapp.azure.com"]
+      }
+
+      subject            = "CN=highspot-poc.westus2.cloudapp.azure.com"
+      validity_in_months = 12
+    }
+  }
 }

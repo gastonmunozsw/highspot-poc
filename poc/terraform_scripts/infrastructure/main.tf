@@ -1,13 +1,9 @@
 locals {
   subnets_address = cidrsubnets(var.network_space, 3, 3, 3, 3, 3, 3, 3)
-  scale_sets      = length(local.subnets_address) - 1
+  scale_sets = length(local.subnets_address) - 1
   private_ip      = cidrhost(local.subnets_address[0], 4)
-  ports           = [3000, 3001, 3002, 3003, 3004]
-  applications    = ["Ruby Web Server", "Clojure API Server", "Job Scheduler Service", "Workflow job workers", "Ruby job workers", "Solr nodes"]
-  domain_name     = "highspot-poc.com"
+  ports = [3000, 3001, 3002, 3003, 3004]
 }
-
-data "azurerm_client_config" "current" {}
 
 resource "random_password" "password" {
   length           = 16
@@ -91,14 +87,6 @@ resource "azurerm_subnet" "subnet" {
   service_endpoints    = ["Microsoft.KeyVault"]
 }
 
-module "certificate" {
-  source = "./modules/certificate"
-  resource_group_name = azurerm_resource_group.rg.name
-  location = azurerm_resource_group.rg.location
-  current = data.azurerm_client_config.current
-  domain_name = local.domain_name
-}
-
 module "app_gateway" {
   source                          = "./modules/app_gateway"
   resource_group                  = azurerm_resource_group.rg
@@ -106,10 +94,12 @@ module "app_gateway" {
   private_ip                      = local.private_ip
   public_ip_name                  = module.naming.generated_names.domain.public_ip[0]
   subnet                          = azurerm_subnet.subnet[0]
+  ssl_certificate                 = module.key_vault.ssl_certificate
   key_vault                       = module.key_vault.key_vault
   user_identity                   = azurerm_user_assigned_identity.user_identity
   allocation_method               = "Static"
   public_ip_sku                   = "Standard"
+  domain_label                    = "highspot-poc"
   app_gateway_sku_name            = "WAF_v2"
   app_gateway_sku_tier            = "WAF_v2"
   app_gateway_capacity            = 2
@@ -120,10 +110,7 @@ module "app_gateway" {
   frontend_ip_configuration_names = module.naming.generated_names.domain.frontend_ip_configuration
   backend_http_settings_names     = module.naming.generated_names.domain.backend_http_settings
   backend_address_pool_names      = module.naming.generated_names.domain.backend_address_pool
-  certificate_zone_name           = module.certificate.certificate_zone_name
-  certificate                     = module.certificate.certificate
-  domain_name                     = local.domain_name
-  # depends_on                      = [module.key_vault.key_vault]
+  depends_on                      = [module.key_vault.key_vault, module.key_vault.ssl_certificate]
   tags                            = {
     environment = var.environment
   }
@@ -140,7 +127,6 @@ module "scale_sets" {
   backend_address_pool_id = [module.app_gateway.backend_address_pools[count.index]]
   tags = {
     environment = var.environment
-    application = local.applications[count.index]
   }
 }
 
@@ -148,10 +134,9 @@ module "key_vault" {
   source               = "./modules/key_vault"
   resource_group       = azurerm_resource_group.rg
   kvault_name          = module.naming.generated_names.domain.key_vault[0]
+  ssl_certificate_name = module.naming.generated_names.domain.key_vault_certificate[0]
   user_identity        = azurerm_user_assigned_identity.user_identity
   gateway_subnet_id    = azurerm_subnet.subnet[0].id
-  current              = data.azurerm_client_config.current
-  # depends_on           = [module.certificate]
   secrets = [
     {
       name   = "vm-pass"

@@ -12,6 +12,7 @@ resource "azurerm_public_ip" "public_ip" {
   location            = var.resource_group.location
   allocation_method   = var.allocation_method
   sku                 = var.public_ip_sku
+  domain_name_label   = var.domain_label
   tags                = var.tags
 }
 
@@ -92,19 +93,12 @@ resource "azurerm_application_gateway" "app_gateway" {
     }
   }
 
-  ssl_certificate {
-    name     = var.domain_name
-    data     = var.certificate.certificate_p12
-    password = var.certificate.certificate_p12_password
-  }
-
   http_listener {
     name                           = local.listener_name
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.frontend_port_name
     protocol                       = "Https"
-    host_name                      = var.domain_name
-    ssl_certificate_name           = var.domain_name
+    ssl_certificate_name           = var.ssl_certificate.name
   }
 
   dynamic "http_listener" {
@@ -143,13 +137,10 @@ resource "azurerm_application_gateway" "app_gateway" {
     identity_ids = [var.user_identity.id]
   }
 
-  tags = var.tags
-}
+  ssl_certificate {
+    name                = var.ssl_certificate.name
+    key_vault_secret_id = var.ssl_certificate.secret_id
+  }
 
-resource "azurerm_dns_a_record" "example" {
-  name                = "test"
-  zone_name           = var.certificate_zone_name
-  resource_group_name = var.resource_group.name
-  ttl                 = 300
-  records             = [azurerm_public_ip.public_ip.ip_address]
+  tags = var.tags
 }

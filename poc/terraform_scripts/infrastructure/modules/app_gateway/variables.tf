@@ -18,6 +18,10 @@ variable "subnet" {
   description = "Subnet"
 }
 
+variable "ssl_certificate" {
+  description = "SSL Certificate"
+}
+
 variable "key_vault" {
   description = "Key Vault"
 }
@@ -38,6 +42,10 @@ variable "allocation_method" {
 
 variable "public_ip_sku" {
   description = "Public IP sku"
+}
+
+variable "domain_label" {
+  description = "Public IP domain label"
 }
 
 variable "app_gateway_sku_name" {
@@ -78,16 +86,4 @@ variable "backend_http_settings_names" {
 
 variable "backend_address_pool_names" {
   type    = list(string)
-}
-
-variable "certificate_zone_name" {
-  description = "Certificate DNS Zone name"
-}
-
-variable "certificate" {
-  description = "SSL Certificate"
-}
-
-variable "domain_name" {
-  description = "DNS Zone name"
 }
