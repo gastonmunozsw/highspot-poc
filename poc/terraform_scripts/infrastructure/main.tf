@@ -1,8 +1,8 @@
 locals {
   subnets_address = cidrsubnets(var.network_space, 3, 3, 3, 3, 3, 3, 3)
-  scale_sets = length(local.subnets_address) - 1
+  scale_sets      = length(local.subnets_address) - 1
   private_ip      = cidrhost(local.subnets_address[0], 4)
-  ports = [3000, 3001, 3002, 3003, 3004]
+  ports           = [3000, 3001, 3002, 3003, 3004]
 }
 
 resource "random_password" "password" {
@@ -18,23 +18,23 @@ module "naming" {
   location     = var.location
   generator = {
     domain = {
-      resource_group              = 1
-      virtual_network             = 1
-      subnet                      = length(local.subnets_address)
-      storage_account             = 1
-      storage_container           = 1
-      virtual_machine_scale_set   = local.scale_sets
-      public_ip                   = 1
-      app_gateway                 = 1
-      key_vault                   = 1
-      key_vault_certificate       = 1
-      user_assigned_identity      = 1
-      routing_rule                = local.scale_sets - 1
-      http_listener               = local.scale_sets - 1
-      frontend_ip_configuration   = local.scale_sets - 1
-      frontend_port               = local.scale_sets - 1
-      backend_http_settings       = local.scale_sets - 1
-      backend_address_pool        = local.scale_sets - 1
+      resource_group            = 1
+      virtual_network           = 1
+      subnet                    = length(local.subnets_address)
+      storage_account           = 1
+      storage_container         = 1
+      virtual_machine_scale_set = local.scale_sets
+      public_ip                 = 1
+      app_gateway               = 1
+      key_vault                 = 1
+      key_vault_certificate     = 1
+      user_assigned_identity    = 1
+      routing_rule              = local.scale_sets - 1
+      http_listener             = local.scale_sets - 1
+      frontend_ip_configuration = local.scale_sets - 1
+      frontend_port             = local.scale_sets - 1
+      backend_http_settings     = local.scale_sets - 1
+      backend_address_pool      = local.scale_sets - 1
     }
   }
 }
@@ -111,7 +111,7 @@ module "app_gateway" {
   backend_http_settings_names     = module.naming.generated_names.domain.backend_http_settings
   backend_address_pool_names      = module.naming.generated_names.domain.backend_address_pool
   depends_on                      = [module.key_vault.key_vault, module.key_vault.ssl_certificate]
-  tags                            = {
+  tags = {
     environment = var.environment
   }
 }
@@ -137,14 +137,14 @@ module "key_vault" {
   ssl_certificate_name = module.naming.generated_names.domain.key_vault_certificate[0]
   user_identity        = azurerm_user_assigned_identity.user_identity
   gateway_subnet_id    = azurerm_subnet.subnet[0].id
-  secrets = [
-    {
-      name   = "vm-pass"
-      secret = random_password.password.result
-    },
-    {
-      name   = "private-ip"
-      secret = local.private_ip
-    }
-  ]
+  # secrets = [
+  #   {
+  #     name   = "vm-pass"
+  #     secret = random_password.password.result
+  #   },
+  #   {
+  #     name   = "private-ip"
+  #     secret = local.private_ip
+  #   }
+  # ]
 }

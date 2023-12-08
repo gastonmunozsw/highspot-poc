@@ -75,12 +75,12 @@ resource "azurerm_key_vault" "vault" {
 
 }
 
-resource "azurerm_key_vault_secret" "secrets" {
-  for_each     = { for secret in var.secrets : secret.name => secret }
-  name         = each.value.name
-  value        = each.value.secret
-  key_vault_id = azurerm_key_vault.vault.id
-}
+# resource "azurerm_key_vault_secret" "secrets" {
+#   for_each     = { for secret in var.secrets : secret.name => secret }
+#   name         = each.value.name
+#   value        = each.value.secret
+#   key_vault_id = azurerm_key_vault.vault.id
+# }
 
 resource "azurerm_key_vault_certificate" "cert" {
   name         = var.ssl_certificate_name
