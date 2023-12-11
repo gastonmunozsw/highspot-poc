@@ -1,0 +1,29 @@
+env:
+  ARM_CLIENT_ID: "b6c877b1-58ee-4c91-9c33-5caf62b9fec9"
+  ARM_CLIENT_SECRET: "n2F8Q~S44vPErdJTCzQCjeCqE2M6D4L_~YbNNbgu"
+  ARM_SUBSCRIPTION_ID: "75ab23a0-d02b-42b6-9a4f-145937adfbcd"
+  ARM_TENANT_ID: "b25036e3-de39-4fec-a4aa-bda41b870d38"
+
+steps:
+  - label: "Az login"
+    command: |
+      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET --tenant $ARM_TENANT_ID
+    key: "az-login"
+    
+  - label: "Terraform plan"
+    command: |
+      cd poc/terraform_scripts/infrastructure 
+      terraform init
+      terraform plan -out tfplan
+      buildkite-agent artifact upload tfplan
+    key: "terraform-plan"
+    depends_on: "az-login"
+
+  - label: "Terraform apply"
+    command: |
+      buildkite-agent artifact download tfplan poc/terraform_scripts/infrastructure
+      cd poc/terraform_scripts/infrastructure 
+      terraform init
+      terraform apply tfplan
+    key: "terraform-apply"
+    depends_on: "terraform-plan"
