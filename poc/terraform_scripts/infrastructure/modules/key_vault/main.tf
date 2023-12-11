@@ -1,5 +1,13 @@
 data "azurerm_client_config" "current" {}
 
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
+locals {
+  ip = chomp(data.http.myip.body)
+}
+
 resource "azurerm_key_vault" "vault" {
   name                       = var.kvault_name
   location                   = var.resource_group.location
@@ -13,6 +21,7 @@ resource "azurerm_key_vault" "vault" {
     default_action             = "Deny"
     bypass                     = "AzureServices"
     virtual_network_subnet_ids = [var.gateway_subnet_id]
+    ip_rules = [local.ip]
   }
 
   access_policy {
