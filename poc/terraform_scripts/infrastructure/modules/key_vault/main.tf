@@ -21,7 +21,7 @@ resource "azurerm_key_vault" "vault" {
     default_action             = "Deny"
     bypass                     = "AzureServices"
     virtual_network_subnet_ids = [var.gateway_subnet_id]
-    ip_rules = [local.ip]
+    ip_rules                   = [local.ip]
   }
 
   access_policy {
@@ -76,7 +76,7 @@ resource "azurerm_key_vault" "vault" {
 
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = var.user_identity.client_id
+    object_id = var.user_identity.principal_id
     secret_permissions = [
       "Get"
     ]
