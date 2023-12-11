@@ -137,14 +137,14 @@ module "key_vault" {
   ssl_certificate_name = module.naming.generated_names.domain.key_vault_certificate[0]
   user_identity        = azurerm_user_assigned_identity.user_identity
   gateway_subnet_id    = azurerm_subnet.subnet[0].id
-  # secrets = [
-  #   {
-  #     name   = "vm-pass"
-  #     secret = random_password.password.result
-  #   },
-  #   {
-  #     name   = "private-ip"
-  #     secret = local.private_ip
-  #   }
-  # ]
+  secrets = [
+    {
+      name   = "vm-pass"
+      secret = random_password.password.result
+    },
+    {
+      name   = "private-ip"
+      secret = local.private_ip
+    }
+  ]
 }

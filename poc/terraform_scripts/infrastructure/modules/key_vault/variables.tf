@@ -6,13 +6,13 @@ variable "kvault_name" {
   description = "Key Vault Name"
 }
 
-# variable "secrets" {
-#   description = "Secrets to store in the Key Vault"
-#   type = list(object({
-#     name   = string
-#     secret = string
-#   }))
-# }
+variable "secrets" {
+  description = "Secrets to store in the Key Vault"
+  type = list(object({
+    name   = string
+    secret = string
+  }))
+}
 
 variable "ssl_certificate_name" {
   description = "SSL Certificate Name"
